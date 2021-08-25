@@ -14,20 +14,52 @@ namespace pie_plugin_manager;
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly.
 
-if (!class_exists('PiePluginManager')) {
+if ( !class_exists( 'PiePluginManager' ) ) {
     class PiePluginManager {
 
         private $options;
-        public function __construct()
+        private $plugin_paths;
+        /**
+         * Class constructor
+         */
+        public function __construct( )
         {
-            add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
-            add_action( 'admin_init', array( $this, 'page_init' ) );
+            register_activation_hook( __FILE__, [ $this, 'on_activate' ] );
+
+            $active_theme = wp_get_theme( );
+            $theme_path = $active_theme->get_stylesheet_directory(  );
+            if ( is_dir( $theme_path . '/plugins' ) ) {
+                $this->plugin_paths = $this->get_plugin_paths( $theme_path . '/plugins' );
+                add_action( 'admin_menu', [ $this, 'add_plugin_page' ] );
+                add_action( 'admin_init', [ $this, 'page_init' ] );
+            }
         }
 
         /**
-         * Add options page
+         * A method to be called on plugin activation.
          */
-        public function add_plugin_page()
+        public function on_activate( ) {
+            add_option( 'pie_plugin_options' );
+        }
+
+        /**
+         * Get plugin paths
+         *
+         * @param String $path Provides the path to get the plugins from
+         * @return Array An array of the plugins installed in the theme
+         */
+        private function get_plugin_paths( $path ) {
+            $paths = [  ];
+            $plugins = list_files( $path, 1 );
+            foreach ( $plugins as $plugin )
+                $paths[ basename( $plugin ) ] = $plugin;
+            return $paths;
+        }
+
+        /**
+         * Add option page on Appearance admin menu
+         */
+        public function add_plugin_page( )
         {
             // This page will be under "Appearance"
             add_theme_page(
@@ -35,14 +67,14 @@ if (!class_exists('PiePluginManager')) {
                 'PIE Plugins',
                 'manage_options',
                 'pie-plugin-management',
-                array( $this, 'create_plugin_management_page' )
+                [ $this, 'create_plugin_management_page' ]
             );
         }
 
         /**
          * Options page callback
          */
-        public function create_plugin_management_page()
+        public function create_plugin_management_page( )
         {
             // Set class property
             $this->options = get_option( 'pie_plugin_options' );
@@ -54,7 +86,6 @@ if (!class_exists('PiePluginManager')) {
                     // This prints out all hidden setting fields
                     settings_fields( 'pie_plugins_option_group' );
                     do_settings_sections( 'pie-plugin-management' );
-                    submit_button();
                 ?>
                 </form>
             </div>
@@ -64,17 +95,17 @@ if (!class_exists('PiePluginManager')) {
         /**
          * Register and add settings
          */
-        public function page_init()
+        public function page_init( )
         {
             register_setting(
                 'pie_plugins_option_group', // Option group
                 'pie_plugin_options', // Option name
-                array( $this, 'sanitize' ) // Sanitize
+                [ $this, 'sanitize' ] // Sanitize
             );
 
             add_settings_section(
-                'general_management_settings', // ID
-                'General', // Title
+                'theme_plugin_settings', // ID
+                'Theme Plugins', // Title
                 null, // Callback
                 'pie-plugin-management' // Page
             );
@@ -82,9 +113,17 @@ if (!class_exists('PiePluginManager')) {
             add_settings_field(
                 'third_party_dependencies', // ID
                 'Third Party Dependencies', // Title
-                array( $this, 'third_party_dependencies_callback' ), // Callback
+                [ $this, 'third_party_dependencies_callback' ], // Callback
                 'pie-plugin-management', // Page
-                'general_management_settings' // Section
+                'theme_plugin_settings' // Section
+            );
+
+            add_settings_field(
+                'plugins', // ID
+                'Plugins', // Title
+                [ $this, 'plugins_callback' ], // Callback
+                'pie-plugin-management', // Page
+                'theme_plugin_settings' // Section
             );
         }
 
@@ -95,11 +134,11 @@ if (!class_exists('PiePluginManager')) {
          */
         public function sanitize( $input )
         {
-            $new_input = array();
-            $ids = ['third_party_dependencies'];
-            if( isset( $input['third_party_dependencies'] ) ) {
-                $dependencies = preg_split( "/\r\n|\n|\r/", esc_attr( $input['third_party_dependencies'] ) );
-                $new_input['third_party_dependencies'] = json_encode( $dependencies );
+            $new_input = [  ];
+            $ids = [ 'third_party_dependencies' ] ;
+            if( isset( $input[ 'third_party_dependencies' ] ) ) {
+                $dependencies = preg_split( "/\r\n|\n|\r/", esc_attr( $input[ 'third_party_dependencies' ] ) );
+                $new_input[ 'third_party_dependencies' ] = json_encode( $dependencies );
             }
 
             return $new_input;
@@ -108,15 +147,29 @@ if (!class_exists('PiePluginManager')) {
         /**
          * Get the settings option array and print one of its values
          */
-        public function third_party_dependencies_callback()
+        public function third_party_dependencies_callback( )
         {
-            printf(
-                '<textarea id="third_party_dependencies" name="pie_plugin_options[third_party_dependencies]" rows="5" cols="30">%s</textarea>',
-                isset( $this->options['third_party_dependencies'] ) ? implode( "\n", json_decode( $this->options['third_party_dependencies'] ) ) : ''
-            );
+            /**
+             * Perhaps have some styling that is based on if the dependency is active or not.
+             * TODO: include the inline styling in a stylesheet
+             */
+            foreach ( json_decode( $this->options[ 'third_party_dependencies' ] ) as $dependency ): ?>
+                <p style="display:block; background: white; width: 50%; padding: 5px 10px;"><?php echo $dependency; ?></p>
+            <?php endforeach;
+        }
+
+        /**
+         * Get the theme plugins path array and print out the values
+         */
+        public function plugins_callback(  ) {
+            foreach ( $this->plugin_paths as $plugin => $path ): ?>
+            <p style="display:block; background: white; width: 50%; padding: 5px 10px;"><?php echo $plugin; ?></p>
+        <?php endforeach;
         }
     }
-    $plugin = new PiePluginManager();
+    $plugin = new PiePluginManager( );
 }
 
 // https://codex.wordpress.org/Creating_Options_Pages used for reference
+// activate_plugin( 'path_to_plugin' ); to activate a plugin
+// deactivate_plugin( 'path_to_plugin' ); to deactivate a plugin

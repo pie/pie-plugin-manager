@@ -1,0 +1,14 @@
+p.pie_plugins_dependency {
+    display:block;
+    background: white;
+    width: 50%;
+    padding: 5px 10px;
+}
+
+#pie_plugin_table tr > :first-child {
+    padding-left: 1rem;
+}
+
+#pie_plugin_table tr > :nth-child(2) {
+    padding-left: 0px;
+}

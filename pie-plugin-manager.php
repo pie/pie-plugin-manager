@@ -32,7 +32,15 @@ if ( !class_exists( 'PiePluginManager' ) ) {
                 $this->plugin_paths = $this->get_plugin_paths( $theme_path . '/plugins' );
                 add_action( 'admin_menu', [ $this, 'add_plugin_page' ] );
                 add_action( 'admin_init', [ $this, 'page_init' ] );
+                add_action( 'admin_enqueue_scripts', [ $this, 'load_css' ] );
             }
+        }
+
+        function toggle_plugin_state() {
+            if (!exists($_POST['toggle_plugin_state'])) return;
+            if (!check_admin_referrer($_POST['toggle_plugin_state'])) return;
+            if (is_plugin_active($plugin)) activate_plugin($plugin);
+            else deactivate_plugin($plugin);
         }
 
         /**
@@ -40,6 +48,10 @@ if ( !class_exists( 'PiePluginManager' ) ) {
          */
         public function on_activate( ) {
             add_option( 'pie_plugin_options' );
+        }
+
+        function load_css() {
+            wp_enqueue_style( 'pie_plugins_style', plugins_url( '/css/style.css' , __FILE__ ) );
         }
 
         /**
@@ -154,18 +166,48 @@ if ( !class_exists( 'PiePluginManager' ) ) {
              * TODO: include the inline styling in a stylesheet
              */
             foreach ( json_decode( $this->options[ 'third_party_dependencies' ] ) as $dependency ): ?>
-                <p style="display:block; background: white; width: 50%; padding: 5px 10px;"><?php echo $dependency; ?></p>
+                <p class="pie_plugins_dependency"><?php echo $dependency; ?></p>
             <?php endforeach;
         }
 
         /**
          * Get the theme plugins path array and print out the values
          */
-        public function plugins_callback(  ) {
-            foreach ( $this->plugin_paths as $plugin => $path ): ?>
-            <p style="display:block; background: white; width: 50%; padding: 5px 10px;"><?php echo $plugin; ?></p>
-        <?php endforeach;
-        }
+        public function plugins_callback(  ) {?>
+            <h2 class='screen-reader-text'>Plugins list</h2>
+            <table class="wp-list-table widefat plugins" id="pie_plugin_table">
+                <thead>
+                    <tr>
+                        <th scope="col" id='name' class='manage-column column-name column-primary'>Plugin</th>
+                        <th scope="col" id='description' class='manage-column column-description'>Description</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach ( $this->plugin_paths as $plugin => $path ):
+                        $plugin_data = get_plugin_data($path.'/'.$plugin.'.php'); ?>
+                        <tr class="<?echo is_plugin_active($plugin) ? 'active':'';?>" data-slug="<?php echo $plugin;?>" data-plugin="<?php echo $plugin.'/'.$plugin.'.php';?>">
+                            <td class="plugin-title column-primary">
+                                <strong><?php echo $plugin_data['Title'];?></strong>
+                                <div class="row-actions visible">
+                                    <span class="<?echo is_plugin_active($plugin) ? 'deactivate':'activate';?>">
+                                        <form action="#?page=pie-plugin-management" method="post">
+                                            <input type="submit" name='toggle_plugin_state' value='<?php echo $plugin;?>' onclick="toggle_plugin_state" />
+                                            <?php wp_nonce_field('toggle-plugin-'.$plugin); ?>
+                                        </form>
+
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="column-description desc">
+                                <div class="plugin-description"><p><?php echo $plugin_data['Description']; ?></p></div>
+                                <div class="active second plugin-version-author-uri">Version <?php echo $plugin_data['Version'];?></div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php }
     }
     $plugin = new PiePluginManager( );
 }
@@ -173,3 +215,4 @@ if ( !class_exists( 'PiePluginManager' ) ) {
 // https://codex.wordpress.org/Creating_Options_Pages used for reference
 // activate_plugin( 'path_to_plugin' ); to activate a plugin
 // deactivate_plugin( 'path_to_plugin' ); to deactivate a plugin
+//https://developer.wordpress.org/reference/classes/wp_list_table/

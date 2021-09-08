@@ -12,46 +12,52 @@ Text Domain: pie-plugin-manager
 */
 namespace pie_plugin_manager;
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly.
+if (! defined('ABSPATH')) exit; // Exit if accessed directly.
 
-if ( !class_exists( 'PiePluginManager' ) ) {
+
+
+if (!class_exists('PiePluginManager')) {
     class PiePluginManager {
 
-        private $options;
+        private $third_party_dependencies;
         private $plugin_paths;
+		private $plugin_states;
         /**
          * Class constructor
          */
-        public function __construct( )
+        public function __construct()
         {
-            register_activation_hook( __FILE__, [ $this, 'on_activate' ] );
+            register_activation_hook(__FILE__, [$this, 'on_activate']);
 
-            $active_theme = wp_get_theme( );
-            $theme_path = $active_theme->get_stylesheet_directory(  );
-            if ( is_dir( $theme_path . '/plugins' ) ) {
-                $this->plugin_paths = $this->get_plugin_paths( $theme_path . '/plugins' );
-                add_action( 'admin_menu', [ $this, 'add_plugin_page' ] );
-                add_action( 'admin_init', [ $this, 'page_init' ] );
-                add_action( 'admin_enqueue_scripts', [ $this, 'load_css' ] );
+            $theme_path = wp_get_theme()->get_stylesheet_directory();
+            if (is_dir($theme_path . '/plugins')) {
+                $this->plugin_states = $this->get_plugin_states($theme_path);
+                add_action('admin_menu', [$this, 'add_plugin_page']);
+                add_action('admin_init', [$this, 'page_init']);
+                add_action('admin_enqueue_scripts', [$this, 'load_css']);
             }
         }
 
-        function toggle_plugin_state() {
-            if (!exists($_POST['toggle_plugin_state'])) return;
-            if (!check_admin_referrer($_POST['toggle_plugin_state'])) return;
-            if (is_plugin_active($plugin)) activate_plugin($plugin);
-            else deactivate_plugin($plugin);
+        function get_plugin_state($slug) {
+			if (isset($this->plugin_active_states[$slug])) {
+				return $this->plugin_active_states[$slug];
+			}
+			else return false;
         }
 
-        /**
-         * A method to be called on plugin activation.
-         */
-        public function on_activate( ) {
-            add_option( 'pie_plugin_options' );
-        }
+        function get_plugin_states($theme_path) {
 
-        function load_css() {
-            wp_enqueue_style( 'pie_plugins_style', plugins_url( '/css/style.css' , __FILE__ ) );
+			$this->plugin_paths = $this->get_plugin_paths($theme_path . '/plugins');
+			$states = [];
+			foreach ($this->plugin_paths as $slug => $path) {
+				if (isset(get_option('pie_plugin_states')[$slug])) {
+					$states[$slug] = get_option('pie_plugin_states')[$slug];
+				} else {
+					$states[$slug] = true;
+				}
+			}
+			update_option('pie_plugin_states', $states);
+			return $states;
         }
 
         /**
@@ -60,18 +66,18 @@ if ( !class_exists( 'PiePluginManager' ) ) {
          * @param String $path Provides the path to get the plugins from
          * @return Array An array of the plugins installed in the theme
          */
-        private function get_plugin_paths( $path ) {
-            $paths = [  ];
-            $plugins = list_files( $path, 1 );
-            foreach ( $plugins as $plugin )
-                $paths[ basename( $plugin ) ] = $plugin;
+        private function get_plugin_paths($path) {
+            $paths = [];
+            $plugins = list_files($path, 1);
+            foreach ($plugins as $plugin)
+                $paths[basename($plugin)] = $plugin;
             return $paths;
         }
 
         /**
          * Add option page on Appearance admin menu
          */
-        public function add_plugin_page( )
+        public function add_plugin_page()
         {
             // This page will be under "Appearance"
             add_theme_page(
@@ -79,26 +85,45 @@ if ( !class_exists( 'PiePluginManager' ) ) {
                 'PIE Plugins',
                 'manage_options',
                 'pie-plugin-management',
-                [ $this, 'create_plugin_management_page' ]
-            );
+                [$this, 'create_plugin_management_page']
+          );
         }
 
         /**
          * Options page callback
          */
-        public function create_plugin_management_page( )
+        public function create_plugin_management_page()
         {
-            // Set class property
-            $this->options = get_option( 'pie_plugin_options' );
+			$this->plugin_active_states = get_option('pie_plugin_states');
+			if (isset($_POST['plugin-activate']) || isset($_POST['plugin-deactivate'])) {
+				if (isset($_POST['theme_plugin_state_change_nonce'])) {
+					if (!wp_verify_nonce($_POST['theme_plugin_state_change_nonce'], 'theme_plugin_state_change_nonce')) {
+						show_message("There was an issue toggling the plugin state. Try again");
+					}
+				 	else {
+						if (isset($_POST['plugin-activate'])) {
+							$this->plugin_active_states[$_POST['plugin-activate']] = !$this->plugin_active_states[$_POST['plugin-active']];
+							update_option('pie_plugin_states', $this->plugin_active_states);
+						}
+						if (isset($_POST['plugin-deactivate'])) {
+							$this->plugin_active_states[$_POST['plugin-deactivate']] = !$this->plugin_active_states[$_POST['plugin-deactivate']];
+							update_option('pie_plugin_states', $this->plugin_active_states);
+						}
+						wp_redirect($_SERVER['HTTP_REFERER']);
+					}
+				}
+			}
             ?>
+
             <div class="wrap">
                 <h1>Pie Plugin Management</h1>
-                <form method="post" action="options.php">
-                <?php
-                    // This prints out all hidden setting fields
-                    settings_fields( 'pie_plugins_option_group' );
-                    do_settings_sections( 'pie-plugin-management' );
-                ?>
+				<form method="POST">
+					<input type="hidden" name="theme_plugin_state_change_nonce" value='<?=wp_create_nonce('theme_plugin_state_change_nonce')?>' />
+	                <?php
+	                    // This prints out all hidden setting fields
+	                    settings_fields('pie_plugins_option_group');
+	                    do_settings_sections('pie-plugin-management');
+	                ?>
                 </form>
             </div>
             <?php
@@ -107,36 +132,26 @@ if ( !class_exists( 'PiePluginManager' ) ) {
         /**
          * Register and add settings
          */
-        public function page_init( )
+        public function page_init()
         {
-            register_setting(
+			register_setting(
                 'pie_plugins_option_group', // Option group
-                'pie_plugin_options', // Option name
-                [ $this, 'sanitize' ] // Sanitize
+                'pie_plugin_dependencies', // Option name
+                [$this, 'sanitize_dependencies'] // Sanitize
+			);
+
+			register_setting(
+				'pie_plugins_option_group', // Option group
+                'pie_plugin_states', // Option name
+                [$this, 'sanitize_active_states'] // Sanitize
             );
 
             add_settings_section(
                 'theme_plugin_settings', // ID
                 'Theme Plugins', // Title
-                null, // Callback
+                [$this, 'plugins_callback'], // Callback
                 'pie-plugin-management' // Page
-            );
-
-            add_settings_field(
-                'third_party_dependencies', // ID
-                'Third Party Dependencies', // Title
-                [ $this, 'third_party_dependencies_callback' ], // Callback
-                'pie-plugin-management', // Page
-                'theme_plugin_settings' // Section
-            );
-
-            add_settings_field(
-                'plugins', // ID
-                'Plugins', // Title
-                [ $this, 'plugins_callback' ], // Callback
-                'pie-plugin-management', // Page
-                'theme_plugin_settings' // Section
-            );
+          );
         }
 
         /**
@@ -144,75 +159,38 @@ if ( !class_exists( 'PiePluginManager' ) ) {
          *
          * @param array $input Contains all settings fields as array keys
          */
-        public function sanitize( $input )
+        public function sanitize_states($input)
         {
-            $new_input = [  ];
-            $ids = [ 'third_party_dependencies' ] ;
-            if( isset( $input[ 'third_party_dependencies' ] ) ) {
-                $dependencies = preg_split( "/\r\n|\n|\r/", esc_attr( $input[ 'third_party_dependencies' ] ) );
-                $new_input[ 'third_party_dependencies' ] = json_encode( $dependencies );
+            if(isset($his->plugin_states)) {
+                return preg_split("/\r\n|\n|\r/", esc_attr($this->plugin_states));
             }
-
-            return $new_input;
-        }
-
-        /**
-         * Get the settings option array and print one of its values
-         */
-        public function third_party_dependencies_callback( )
-        {
-            /**
-             * Perhaps have some styling that is based on if the dependency is active or not.
-             * TODO: include the inline styling in a stylesheet
-             */
-            foreach ( json_decode( $this->options[ 'third_party_dependencies' ] ) as $dependency ): ?>
-                <p class="pie_plugins_dependency"><?php echo $dependency; ?></p>
-            <?php endforeach;
         }
 
         /**
          * Get the theme plugins path array and print out the values
          */
-        public function plugins_callback(  ) {?>
-            <h2 class='screen-reader-text'>Plugins list</h2>
-            <table class="wp-list-table widefat plugins" id="pie_plugin_table">
-                <thead>
-                    <tr>
-                        <th scope="col" id='name' class='manage-column column-name column-primary'>Plugin</th>
-                        <th scope="col" id='description' class='manage-column column-description'>Description</th>
-                    </tr>
-                </thead>
+        public function plugins_callback() {
+	  		include_once(plugin_dir_path(__FILE__).'/class-pie-plugin-list-table.php');
+	  		$table = new PiePluginListTable($this->plugin_paths, $this->plugin_states);
+	  		$table->prepare_items();
+	  		$table->display();
+		}
 
-                <tbody>
-                    <?php foreach ( $this->plugin_paths as $plugin => $path ):
-                        $plugin_data = get_plugin_data($path.'/'.$plugin.'.php'); ?>
-                        <tr class="<?echo is_plugin_active($plugin) ? 'active':'';?>" data-slug="<?php echo $plugin;?>" data-plugin="<?php echo $plugin.'/'.$plugin.'.php';?>">
-                            <td class="plugin-title column-primary">
-                                <strong><?php echo $plugin_data['Title'];?></strong>
-                                <div class="row-actions visible">
-                                    <span class="<?echo is_plugin_active($plugin) ? 'deactivate':'activate';?>">
-                                        <form action="#?page=pie-plugin-management" method="post">
-                                            <input type="submit" name='toggle_plugin_state' value='<?php echo $plugin;?>' onclick="toggle_plugin_state" />
-                                            <?php wp_nonce_field('toggle-plugin-'.$plugin); ?>
-                                        </form>
+        /**
+         * A method to be called on plugin activation.
+         */
+        public function on_activate() {
+            add_option("pie_plugin_states", []);
+        }
 
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="column-description desc">
-                                <div class="plugin-description"><p><?php echo $plugin_data['Description']; ?></p></div>
-                                <div class="active second plugin-version-author-uri">Version <?php echo $plugin_data['Version'];?></div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php }
+        function load_css() {
+            wp_enqueue_style('pie_plugins_style', plugins_url('/css/style.css' , __FILE__));
+        }
     }
-    $plugin = new PiePluginManager( );
+    $plugin = new PiePluginManager();
 }
 
 // https://codex.wordpress.org/Creating_Options_Pages used for reference
-// activate_plugin( 'path_to_plugin' ); to activate a plugin
-// deactivate_plugin( 'path_to_plugin' ); to deactivate a plugin
+// activate_plugin('path_to_plugin'); to activate a plugin
+// deactivate_plugin('path_to_plugin'); to deactivate a plugin
 //https://developer.wordpress.org/reference/classes/wp_list_table/

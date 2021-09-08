@@ -90,4 +90,7 @@ if (!class_exists('PiePluginListTable')) {
 			}
 		}
 	}
+	$table = new PiePluginListTable($this->plugin_paths, $this->plugin_states);
+	$table->prepare_items();
+	$table->display();
 }

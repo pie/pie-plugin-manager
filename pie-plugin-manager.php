@@ -22,6 +22,7 @@ if (!class_exists('PiePluginManager')) {
         private $plugin_dependencies;
         private $plugin_paths;
 		private $plugin_states;
+
         /**
          * Class constructor
          */
@@ -38,20 +39,66 @@ if (!class_exists('PiePluginManager')) {
             }
         }
 
+        /**
+         * Add option page on Appearance admin menu
+         */
+        public function add_plugin_page() {
+            // This page will be under "Appearance"
+            add_theme_page(
+                'Manage PIE Plugins',
+                'PIE Plugins',
+                'manage_options',
+                'pie-plugin-management',
+                [$this, 'create_plugin_management_page']
+			);
+        }
+
+		/**
+		 * Get dependency data
+		 *
+		 * @return Array An array mapping dependency path => name
+		 */
 		function get_plugin_dependencies() {
 			$path = wp_get_theme()->get_stylesheet_directory().'/plugins/dependencies.json';
 			if (!file_exists($path)) return [];
 			return json_decode(file_get_contents($path), true);
 		}
 
-        function get_plugin_state($slug) {
+        /**
+         * Get plugin paths
+         *
+         * @param String $path Provides the path to get the plugins from
+         * @return Array An array of the paths of plugins installed in the theme
+         */
+        private function get_plugin_paths($path) {
+            $paths = [];
+            $plugins = list_files($path, 1);
+            foreach ($plugins as $plugin) {
+				if (is_dir($plugin)) $paths[basename($plugin)] = $plugin;
+			}
+            return $paths;
+        }
+
+		/**
+		 * Get the state of a single plugin
+		 *
+		 * @param String $slug contains the related slug of the theme based plugin.
+		 * @return Boolean A state active flag (true=active, false=inactive)
+		 */
+        private function get_plugin_state($slug) {
 			if (isset($this->plugin_active_states[$slug])) {
 				return $this->plugin_active_states[$slug];
 			}
 			else return false;
         }
 
-        function get_plugin_states($path) {
+		/**
+		 * Get the state of all plugins from a path
+		 *
+		 * @param String $slug contains the related slug of the theme based plugin.
+		 * @return Array An array mapping a plugin slug => state (recieved from the options table)
+		 */
+        private function get_plugin_states($path) {
 
 			$this->plugin_paths = $this->get_plugin_paths($path);
 			$states = [];
@@ -67,58 +114,13 @@ if (!class_exists('PiePluginManager')) {
         }
 
         /**
-         * Get plugin paths
-         *
-         * @param String $path Provides the path to get the plugins from
-         * @return Array An array of the plugins installed in the theme
-         */
-        private function get_plugin_paths($path) {
-            $paths = [];
-            $plugins = list_files($path, 1);
-            foreach ($plugins as $plugin) {
-				if (is_dir($plugin)) $paths[basename($plugin)] = $plugin;
-			}
-            return $paths;
-        }
-
-        /**
-         * Add option page on Appearance admin menu
-         */
-        public function add_plugin_page() {
-            // This page will be under "Appearance"
-            add_theme_page(
-                'Manage PIE Plugins',
-                'PIE Plugins',
-                'manage_options',
-                'pie-plugin-management',
-                [$this, 'create_plugin_management_page']
-			);
-        }
-
-        /**
          * Options page callback
          */
 		public function create_plugin_management_page() {
 			$this->plugin_active_states = get_option('pie_plugin_states');
-			if (isset($_POST['plugin-activate']) || isset($_POST['plugin-deactivate'])) {
-				if (isset($_POST['theme_plugin_state_change_nonce'])) {
-					if (!wp_verify_nonce($_POST['theme_plugin_state_change_nonce'], 'theme_plugin_state_change_nonce')) {
-						show_message("There was an issue toggling the plugin state. Try again");
-					}
-				 	else {
-						if (isset($_POST['plugin-activate'])) {
-							$this->plugin_active_states[$_POST['plugin-activate']] = !$this->plugin_active_states[$_POST['plugin-active']];
-							update_option('pie_plugin_states', $this->plugin_active_states);
-						}
-						if (isset($_POST['plugin-deactivate'])) {
-							$this->plugin_active_states[$_POST['plugin-deactivate']] = !$this->plugin_active_states[$_POST['plugin-deactivate']];
-							update_option('pie_plugin_states', $this->plugin_active_states);
-						}
-						wp_redirect($_SERVER['HTTP_REFERER']);
-					}
-				}
-			}
-            ?>
+			// If the either of the plugin state change values are POSTed, then perform the function.
+			if (isset($_POST['plugin-activate']) || isset($_POST['plugin-deactivate']))
+				$this->do_plugin_state_toggle(); ?>
             <div class="wrap">
                 <h1>Pie Plugin Management</h1>
 				<form method="POST">
@@ -133,25 +135,31 @@ if (!class_exists('PiePluginManager')) {
             <?php
         }
 
-		public function plugin_dependencies_callback() {
-			if (count($this->plugin_dependencies) > 0) {
-				foreach ($this->plugin_dependencies as $plugin=>$dependency_types) {
-					$plugin_path = $this->plugin_paths[$plugin].'/'.$plugin.'.php';
-					$plugin_data = get_plugin_data($plugin_path);
-					echo '<p class="plugin_name">'.$plugin_data['Name'].' ('.['inactive', 'active'][$this->plugin_states[$plugin]].')</p><div>';
-					foreach ($dependency_types as $type=>$dependencies) {
-						echo '<p class="dependency_type">'.ucwords($type).'</p><div>';
-						if (count($dependencies) > 0) {
-							foreach ($dependencies as $dependency_rel_path=>$dependency_name) {
-								$dependency_active = is_plugin_active($dependency_rel_path);
-								echo '<p class="dependency_name '.["inactive", 'active'][$dependency_active].'">'.$dependency_name.'</p>';
-							}
-						} else echo '<p class="dependency_name">No ' . ucfirst($type) . ' Plugin Dependencies Found</p>';
-						echo '</div>';
-					}
-					echo '</div>';
+		/**
+		 * Try and do a plugin state toggle.
+		 */
+		private function do_plugin_state_toggle() {
+			// Check if the correct nonce is set.
+			if (isset($_POST['theme_plugin_state_change_nonce'])) {
+				// If the nonce value is incorrect, let the user know
+				if (!wp_verify_nonce($_POST['theme_plugin_state_change_nonce'], 'theme_plugin_state_change_nonce')) {
+					show_message("There was an issue toggling the plugin state. Try again");
+					return;
 				}
-			} else echo '<p class="plugin_name">No Theme Plugin Dependencies Found</p>';
+				// If the a 'plugin-activate' value is POSTed, then activate the plugin then call the plugin activation hook
+				if (isset($_POST['plugin-activate'])) {
+					$this->plugin_active_states[$_POST['plugin-activate']] = !$this->plugin_active_states[$_POST['plugin-active']];
+					do_action('activate_'.$_POST['plugin-active']);
+				}
+				// If the a 'plugin-deactivate' value is POSTed, then deactivate the plugin, then call the plugin deactivation hook
+				else if (isset($_POST['plugin-deactivate'])) {
+					$this->plugin_active_states[$_POST['plugin-deactivate']] = !$this->plugin_active_states[$_POST['plugin-deactivate']];
+					do_action('deactivate_'.$_POST['plugin-active']);
+				}
+				// Update the correct option field and reload the page
+				update_option('pie_plugin_states', $this->plugin_active_states);
+				wp_redirect($_SERVER['HTTP_REFERER']);
+			}
 		}
 
         /**
@@ -198,7 +206,33 @@ if (!class_exists('PiePluginManager')) {
         }
 
         /**
-         * Get the theme plugins path array and print out the values
+         * Outputs a structured & formatted list of the dependencies
+         */
+		public function plugin_dependencies_callback() {
+			if (count($this->plugin_dependencies) > 0) {
+				foreach ($this->plugin_dependencies as $plugin=>$dependency_types) {
+					$plugin_path = $this->plugin_paths[$plugin].'/'.$plugin.'.php';
+					$plugin_data = get_plugin_data($plugin_path);
+					echo '<p class="plugin_name">'.$plugin_data['Name'].' ('.['inactive', 'active'][$this->plugin_states[$plugin]].')</p><div>';
+					foreach ($dependency_types as $type=>$dependencies) {
+						echo '<p class="dependency_type">'.ucwords($type).'</p><div>';
+						if (count($dependencies) > 0) {
+							foreach ($dependencies as $dependency_rel_path=>$dependency_name) {
+								$dependency_active = is_plugin_active($dependency_rel_path);
+								$activate_state_str = ["inactive", 'active'][$dependency_active];
+								$dependency_search_path = '/wp-admin/plugins.php?s='.str_replace( '.php', '', end(explode('/', $dependency_rel_path))).'&plugin_status=all';
+								echo '<a class="dependency_name '.$activate_state_str.'" href="'.$dependency_search_path.'">'.$dependency_name.'</a>';
+							}
+						} else echo '<p class="dependency_name">No ' . ucfirst($type) . ' Plugin Dependencies Found</p>';
+						echo '</div>';
+					}
+					echo '</div>';
+				}
+			} else echo '<p class="plugin_name">No Theme Plugin Dependencies Found</p>';
+		}
+
+        /**
+         * Output a WP_List_Table containing data related to the plugins installed in the theme.
          */
         public function plugins_callback() {
 	  		include_once(plugin_dir_path(__FILE__).'/views/pie-plugin-list-table.php');

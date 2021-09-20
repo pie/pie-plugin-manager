@@ -5,23 +5,7 @@ p.pie_plugins_dependency {
     padding: 5px 10px;
 }
 
-#pie_plugin_table tr > :first-child {
-    padding-left: 1rem;
-}
 
-#pie_plugin_table tr > :nth-child(2) {
-    padding-left: 0px;
-}
-
-p.dependency_type::before, p.dependency_name::before {
-	content: '\21B3'
-}
-p.dependency_name.active {
-	color: green;
-}
-p.dependency_name.inactive {
-	color: red;
-}
 p ~div {
 	margin-left: 2rem;
 }
@@ -32,6 +16,42 @@ p.plugin_name {
 p.dependency_type {
 	font-size: 1.1em;
 }
-p.dependency_name {
+p.dependency_type::before, p.dependency_name::before {
+	content: '\21B3'
+}
+a.dependency_name {
 	font-size: 1em;
+	text-decoration: none;
+}
+a.dependency_name:hover {
+	font-weight: bold;
+}
+a.dependency_name.active {
+	color: green;
+}
+a.dependency_name.inactive {
+	color: red;
+}
+
+#pie_plugin_table tr > :first-child {
+    padding-left: 1rem;
+}
+#pie_plugin_table tr > :nth-child(2) {
+    padding-left: 0px;
+}
+.table-plugin-name.active {
+	font-weight: bold;
+}
+button.table-plugin-activation-toggle {
+	border: 0;
+	background-color: transparent;
+}
+button.table-plugin-activation-toggle[name=plugin-activate] {
+	color: green;
+}
+button.table-plugin-activation-toggle[name=plugin-deactivate] {
+	color: red;
+}
+button.table-plugin-activation-toggle:hover {
+	font-weight: bold;
 }

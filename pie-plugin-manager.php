@@ -213,7 +213,7 @@ if (!class_exists('PiePluginManager')) {
 				foreach ($this->plugin_dependencies as $plugin=>$dependency_types) {
 					$plugin_path = $this->plugin_paths[$plugin].'/'.$plugin.'.php';
 					$plugin_data = get_plugin_data($plugin_path);
-					echo '<p class="plugin_name">'.$plugin_data['Name'].' ('.['inactive', 'active'][$this->plugin_states[$plugin]].')</p><div>';
+					echo '<p class="plugin_name">'.$plugin_data['Name'].' ('.($this->plugin_states[$plugin]?'active':'inactive').')</p><div>';
 					foreach ($dependency_types as $type=>$dependencies) {
 						echo '<p class="dependency_type">'.ucwords($type).'</p><div>';
 						if (count($dependencies) > 0) {

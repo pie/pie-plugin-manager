@@ -72,12 +72,10 @@ if (!class_exists('PiePluginListTable')) {
 		}
 
 		public function column_plugin_name($item) {
-			$output = '<p>'.$item['plugin_name'].'</p><br>';
-			if ($item['plugin_state']) {
-				$output .= '<button name="plugin-deactivate" value="' . $item["plugin-slug"] . '">Deactivate</button>';
-			} else {
-				$output .= '<button name="plugin-activate" value="' . $item["plugin-slug"] . '">Activate</button>';
-			}
+			$output = sprintf('<p class="table-plugin-name %s">%s</p>', ($item['plugin_state']?'active':'inactive'), $item['plugin_name']);
+			$button_name = 'plugin-'.($item['plugin_state']?'deactivate':'activate');
+			$button_text = $item['plugin_state']?'Deactivate':'Activate';
+			$output .= sprintf('<button class="table-plugin-activation-toggle" name="%s" value="%s">%s</button>', $button_name, $item["plugin-slug"], $button_text);
 
 			return $output;
 		}
@@ -90,4 +88,7 @@ if (!class_exists('PiePluginListTable')) {
 			}
 		}
 	}
+	$table = new PiePluginListTable($this->plugin_paths, $this->plugin_states);
+	$table->prepare_items();
+	$table->display();
 }

@@ -11,8 +11,8 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: pie-plugin-manager
 */
 
-var_dump(ABSPATH);
-//include('inc/plugin-updater/updater.php');
+include('inc/plugin-updater/updater.php');
+include('pie-plugin-list-table.php');
 
 if (! defined('ABSPATH')) exit; // Exit if accessed directly.
 

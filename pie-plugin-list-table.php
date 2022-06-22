@@ -1,7 +1,5 @@
 <?php
 
-namespace pie_plugin_manager;
-
 if (!defined('ABSPATH')) exit; // Exit if accessed directly.
 
 require_once(ABSPATH . '/wp-admin/includes/class-wp-list-table.php');

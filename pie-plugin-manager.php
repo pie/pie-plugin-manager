@@ -3,7 +3,7 @@
 Plugin Name: PIE Plugin Manager
 Plugin URI:  https://bitbucket.org/pieweb/pie-plugin-manager
 Description: Allows the user to view and toggle plugins that are in a PIE theme
-Version:     1.0
+Version:     1.1
 Author:      The team at PIE
 Author URI:  pie.co.de
 License:     GPL2

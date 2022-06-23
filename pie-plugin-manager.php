@@ -11,10 +11,17 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: pie-plugin-manager
 */
 
-include('inc/plugin-updater/updater.php');
-include('pie-plugin-list-table.php');
-
 if (! defined('ABSPATH')) exit; // Exit if accessed directly.
+
+// Update Checker
+require('plugin-update-checker/plugin-update-checker.php');
+$updateChecker = Puc_v4_Factory::buildUpdateChecker(
+    'https://github.com/pie/pie-plugin-manager',
+    __FILE__,
+    'pie-plugin-manager'
+);
+$updateChecker->setAuthentication('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');
+$updateChecker->setBranch('release');
 
 if (!class_exists('PiePluginManager')) {
     class PiePluginManager {
@@ -28,23 +35,6 @@ if (!class_exists('PiePluginManager')) {
          */
         public function __construct() {
             register_activation_hook(__FILE__, [$this, 'on_activate']);
-
-            if (is_admin()) { // note the use of is_admin() to double check that this is happening in the admin
-                $config = array(
-                    'slug' => plugin_basename(__FILE__), // this is the slug of your plugin
-                    'proper_folder_name' => 'plugin-name', // this is the name of the folder your plugin lives in
-                    'api_url' => 'https://api.github.com/repos/pie/pie-plugin-manager', // the GitHub API url of your GitHub repo
-                    'raw_url' => 'https://raw.github.com/repos/pie/pie-plugin-manager/dev', // the GitHub raw url of your GitHub repo
-                    'github_url' => 'https://github.com/repos/pie/pie-plugin-manager', // the GitHub url of your GitHub repo
-                    'zip_url' => 'https://github.com/repos/pie/pie-plugin-manager/zipball/dev', // the zip url of the GitHub repo
-                    'sslverify' => true, // whether WP should check the validity of the SSL cert when getting an update, see https://github.com/jkudish/WordPress-GitHub-Plugin-Updater/issues/2 and https://github.com/jkudish/WordPress-GitHub-Plugin-Updater/issues/4 for details
-                    'requires' => '3.0', // which version of WordPress does your plugin require?
-                    'tested' => '3.3', // which version of WordPress is your plugin tested up to?
-                    'readme' => 'README.md', // which file to use as the readme for the version number
-                    'access_token' => '', // Access private repositories by authorizing under Plugins > GitHub Updates when this example plugin is installed
-                );
-                //new WP_GitHub_Updater($config);
-            }
 
             $theme_path = wp_get_theme()->get_stylesheet_directory();
             if (is_dir($theme_path . '/plugins')) {

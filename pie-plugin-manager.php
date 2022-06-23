@@ -3,9 +3,9 @@
 Plugin Name: PIE Plugin Manager
 Plugin URI:  https://github.com/pie/pie-plugin-manager
 Description: Allows the user to view and toggle plugins that are in a PIE theme
-Version:     1.2
+Version:     1.2.1
 Author:      The team at PIE
-Author URI:  pie.co.de
+Author URI:  https://pie.co.de
 License:     GPL2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: pie-plugin-manager
@@ -16,7 +16,7 @@ if (! defined('ABSPATH')) exit; // Exit if accessed directly.
 // Update Checker
 require('plugin-update-checker/plugin-update-checker.php');
 $updateChecker = Puc_v4_Factory::buildUpdateChecker(
-    'https://github.com/pie/pie-plugin-manager',
+    'https://github.com/pie/pie-plugin-manager/blob/release/release-data.json',
     __FILE__,
     'pie-plugin-manager'
 );
@@ -252,7 +252,7 @@ if (!class_exists('PiePluginManager')) {
         }
 
         function load_css() {
-            wp_enqueue_style('pie_plugins_style', plugins_url('/css/style.css' , __FILE__));
+            wp_enqueue_style('pie_plugins_style', plugins_url('/style.css' , __FILE__));
         }
     }
     $plugin = new PiePluginManager();

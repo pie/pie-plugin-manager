@@ -26,8 +26,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 14
-        run: npm install
-        run: npm run build
+      - run: npm install
+      - run: npm run build
 
       # Push the update.json to WPE install
       - name: Publish update.json

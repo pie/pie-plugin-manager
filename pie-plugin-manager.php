@@ -16,12 +16,10 @@ if (! defined('ABSPATH')) exit; // Exit if accessed directly.
 // Update Checker
 require('plugin-update-checker/plugin-update-checker.php');
 $updateChecker = Puc_v4_Factory::buildUpdateChecker(
-    'https://github.com/pie/pie-plugin-manager/blob/release/release-data.json',
+    'https://drive.google.com/file/d/1ujYQ5wOMvy3hZHrB2HudWRf67OJo4DcC/view?usp=sharing',
     __FILE__,
     'pie-plugin-manager'
 );
-$updateChecker->setAuthentication('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');
-$updateChecker->setBranch('release');
 
 if (!class_exists('PiePluginManager')) {
     class PiePluginManager {

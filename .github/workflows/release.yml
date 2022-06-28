@@ -42,10 +42,10 @@ jobs:
 
       # Remove update.json from local env
       - run: |
-        rm release-data.json
-        rm .gitignore
-        rm -rf .git/
-        rm -rf .github/
+          rm release-data.json
+          rm .gitignore
+          rm -rf .git/
+          rm -rf .github/
 
       # Zip local env, excluding certain files (git related)
       - uses: vimtor/action-zip@v1

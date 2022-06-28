@@ -1,6 +1,6 @@
 {
 	"name": "PIE Plugin Manager",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"download_url": "https://github.com/pie/pie-plugin-manager",
 	"homepage": "http://pie.co.de/",
 	"requires": "5.0",
@@ -13,8 +13,7 @@
 	"sections": {
 		"description": "(Required) Plugin description. Basic HTML can be used in all sections.",
 		"installation": "(Recommended) Installation instructions.",
-		"changelog": "(Recommended) Changelog. <p>This section will be displayed by default when the user clicks 'View version x.y.z details'.</p>",
-		"custom_section": "This is a custom section labeled 'Custom Section'."
+		"changelog": "(Recommended) Changelog. <p>This section will be displayed by default when the user clicks 'View version x.y.z details'.</p>"
 	},
 	
 	"icons" : {
@@ -25,10 +24,5 @@
 	"banners": {
 		"low": "http://w-shadow.com/files/external-update-example/assets/banner-772x250.png",
 		"high": "http://w-shadow.com/files/external-update-example/assets/banner-1544x500.png"
-	},
-
-	"rating": 90,
-	"num_ratings": 123,
-	"downloaded": 1234,
-	"active_installs": 12345
+	}
 }

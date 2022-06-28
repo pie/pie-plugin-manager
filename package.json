@@ -1,0 +1,20 @@
+{
+  "name": "pie-plugin-manager",
+  "version": "1.2.2",
+  "description": "~Current Version:1.0.1~",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"hello world\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pie/pie-plugin-manager.git"
+  },
+  "author": "PIE web limited",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pie/pie-plugin-manager/issues"
+  },
+  "homepage": "https://github.com/pie/pie-plugin-manager#readme"
+}

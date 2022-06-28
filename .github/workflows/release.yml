@@ -55,7 +55,7 @@ jobs:
           dest: ./pie-plugin-manager.zip
 
       # Push the zip up to storage- name: Publish
-        uses: nogsantos/scp-deploy@master
+      - uses: nogsantos/scp-deploy@master
         with:
           src: ./pie-plugin-manager.zip
           host: ${{ secrets.SSH_HOST }}

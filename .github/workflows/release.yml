@@ -38,7 +38,7 @@ jobs:
           remote: ${{ secrets.SSH_DIR }}
           port: ${{ secrets.SSH_PORT }}
           user: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_KEY }}
 
       # Remove update.json from local env
       - run: |
@@ -62,6 +62,6 @@ jobs:
           remote: ${{ secrets.SSH_DIR }}
           port: ${{ secrets.SSH_PORT }}
           user: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH__PRIVATE_KEY }}
+          key: ${{ secrets.SSH_KEY }}
 
       # Cleanup

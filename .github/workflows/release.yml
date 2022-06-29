@@ -1,6 +1,6 @@
 on:
   push:
-    tags: ["*", "*.*", "*.*.*"]
+    tags: ["v*", "v*.*", "v*.*.*"]
 jobs:
   build:
     # The type of runner that the job will run on

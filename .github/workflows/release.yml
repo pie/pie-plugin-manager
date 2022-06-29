@@ -46,6 +46,7 @@ jobs:
       - run: |
           rm release-data.json
           rm README.md
+      - run: cd ..
       - run: ls -al
 
       # Zip local env, excluding certain files (git related)

@@ -51,8 +51,9 @@ jobs:
       - name: Archive Release
         uses: thedoctor0/zip-release@main
         with:
+          directory: ../
           filename: 'pie-plugin-manager.zip'
-          exclusions: '*.git* /*node_modules/* package*.json README.* release-data.json __TEMP*'
+          recursive-exclusions: '*.git* /*node_modules/* package*.json README.* release-data.json __TEMP*'
 
       # Push the zip up to storage- name: Publish
       - uses: nogsantos/scp-deploy@master

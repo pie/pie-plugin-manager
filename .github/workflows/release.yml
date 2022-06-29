@@ -52,7 +52,7 @@ jobs:
         uses: thedoctor0/zip-release@main
         with:
           directory: ../
-          filename: 'pie-plugin-manager.zip'
+          filename: 'pie-plugin-manager/pie-plugin-manager.zip'
           exclusions: 'pie-plugin-manager/*.git* pie-plugin-manager/*node_modules/* pie-plugin-manager/package*.json pie-plugin-manager/README.* pie-plugin-manager/release-data.json pie-plugin-manager/__TEMP*'
 
       # Push the zip up to storage- name: Publish

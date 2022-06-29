@@ -44,15 +44,15 @@ jobs:
       # Remove update.json from local env
       - run: |
           rm release-data.json
-          rm .gitignore
-          rm -rf .git/
-          rm -rf .github/
-          rm package.json
-          rm package-lock.json
           rm README.md
       - run: ls -al
 
       # Zip local env, excluding certain files (git related)
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
+        with:
+          filename: 'pie-plugin-manager.zip'
+          exclusions: '*.git* /*node_modules/* package*.json README.* release-data.json __TEMP*'
       - uses: vimtor/action-zip@v1
         name: Zip release files
         with:
@@ -62,7 +62,7 @@ jobs:
       # Push the zip up to storage- name: Publish
       - uses: nogsantos/scp-deploy@master
         with:
-          src: ./pie-plugin-manager.zip
+          src: pie-plugin-manager.zip
           host: ${{ secrets.SSH_HOST }}
           remote: ${{ secrets.SSH_DIR }}
           port: ${{ secrets.SSH_PORT }}

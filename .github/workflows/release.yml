@@ -47,12 +47,16 @@ jobs:
           rm .gitignore
           rm -rf .git/
           rm -rf .github/
+          rm package.json
+          rm package-lock.json
+          rm README.md
+      - run: ls -al
 
       # Zip local env, excluding certain files (git related)
       - uses: vimtor/action-zip@v1
         name: Zip release files
         with:
-          files: ../pie-plugin-manager
+          files: ../pie-plugin-manager/
           dest: ./pie-plugin-manager.zip
 
       # Push the zip up to storage- name: Publish

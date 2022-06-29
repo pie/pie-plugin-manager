@@ -16,7 +16,7 @@ if (! defined('ABSPATH')) exit; // Exit if accessed directly.
 // Update Checker
 require('plugin-update-checker/plugin-update-checker.php');
 $updateChecker = Puc_v4_Factory::buildUpdateChecker(
-    'https://drive.google.com/file/d/1ujYQ5wOMvy3hZHrB2HudWRf67OJo4DcC/view?usp=sharing',
+    'http://pie.co.de/wp-content/uploads/plugins-themes/plugins/pie-plugin-manager/release-data.json',
     __FILE__,
     'pie-plugin-manager'
 );

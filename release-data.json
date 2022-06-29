@@ -1,7 +1,7 @@
 {
 	"name": "PIE Plugin Manager",
 	"version": "1.2.2",
-	"download_url": "https://github.com/pie/pie-plugin-manager",
+	"download_url": "http://pie.co.de/wp-content/uploads/plugins-themes/plugins/pie-plugin-manager/pie-plugin-manager.zip",
 	"homepage": "http://pie.co.de/",
 	"requires": "5.0",
 	"tested": "5.9",

@@ -47,8 +47,8 @@ jobs:
           rm release-data.json
           rm README.md
       - run: |
-        cd ..
-        ls -al
+          cd ..
+          ls -al
 
       # Zip local env, excluding certain files (git related)
       - name: Archive Release

@@ -31,10 +31,10 @@ jobs:
       - run: ls
 
       # Push the update.json to WPE install
-      - name: Publish update.json
+      - name: Publish release-data.json
         uses: nogsantos/scp-deploy@master
         with:
-          src: ./update.json
+          src: release-data.json
           host: ${{ secrets.SSH_HOST }}
           remote: ${{ secrets.SSH_DIR }}
           port: ${{ secrets.SSH_PORT }}

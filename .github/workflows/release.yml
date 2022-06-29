@@ -53,11 +53,6 @@ jobs:
         with:
           filename: 'pie-plugin-manager.zip'
           exclusions: '*.git* /*node_modules/* package*.json README.* release-data.json __TEMP*'
-      - uses: vimtor/action-zip@v1
-        name: Zip release files
-        with:
-          files: ../pie-plugin-manager/
-          dest: ./pie-plugin-manager.zip
 
       # Push the zip up to storage- name: Publish
       - uses: nogsantos/scp-deploy@master

@@ -29,7 +29,6 @@ jobs:
           node-version: 14
       - run: npm install
       - run: npm run build
-      - run: ls
 
       # Push the update.json to WPE install
       - name: Publish release-data.json
@@ -46,9 +45,6 @@ jobs:
       - run: |
           rm release-data.json
           rm README.md
-      - run: |
-          cd ..
-          ls -al
 
       # Zip local env, excluding certain files (git related)
       - name: Archive Release
